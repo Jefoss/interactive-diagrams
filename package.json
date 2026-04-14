@@ -4,15 +4,25 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "dev": "vite",
+    "build": "npm run build:lib && npm run build:app",
+    "build:lib": "tsc -p tsconfig.json",
+    "build:app": "vite build",
     "schema:write": "npm run build && node ./dist/scripts/write-flow-document-schema.js",
     "test": "npm run build && node ./dist/test/flow-document.test.js"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "typescript": "^6.0.2"
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "typescript": "^6.0.2",
+    "vite": "^7.1.10"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.34.49"
+    "@sinclair/typebox": "^0.34.49",
+    "@xyflow/react": "^12.10.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
   }
 }

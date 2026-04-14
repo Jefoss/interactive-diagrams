@@ -17,6 +17,32 @@
       "minLength": 1,
       "type": "string"
     },
+    "views": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "type": "string"
+          }
+        }
+      }
+    },
     "nodes": {
       "type": "array",
       "items": {
@@ -49,6 +75,30 @@
               },
               {
                 "const": "end",
+                "type": "string"
+              }
+            ]
+          },
+          "tone": {
+            "anyOf": [
+              {
+                "const": "neutral",
+                "type": "string"
+              },
+              {
+                "const": "info",
+                "type": "string"
+              },
+              {
+                "const": "success",
+                "type": "string"
+              },
+              {
+                "const": "warning",
+                "type": "string"
+              },
+              {
+                "const": "danger",
                 "type": "string"
               }
             ]
@@ -150,6 +200,79 @@
           "note": {
             "minLength": 1,
             "type": "string"
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "steps"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "viewId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "steps": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "id",
+                "title",
+                "body",
+                "activeNodeIds",
+                "activeEdgeIds"
+              ],
+              "properties": {
+                "id": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "title": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "body": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "activeNodeIds": {
+                  "type": "array",
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "activeEdgeIds": {
+                  "type": "array",
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                }
+              }
+            }
           }
         }
       }
