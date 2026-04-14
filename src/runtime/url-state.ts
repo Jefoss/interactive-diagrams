@@ -38,7 +38,9 @@ export function readViewerUrlState(
     : matchingScenario;
   const selectedView = resolveView(
     viewsFrom(document),
-    selectedScenario?.viewId ?? requestedViewId,
+    interactiveRequested
+      ? selectedScenario?.viewId ?? requestedViewId
+      : requestedViewId ?? selectedScenario?.viewId ?? null,
   );
 
   return {

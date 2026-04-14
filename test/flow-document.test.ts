@@ -213,6 +213,45 @@ const tests: Array<{ name: string; run: () => void }> = [
     },
   },
   {
+    name: "viewer diagram mode keeps an explicit view even when a scenario is present",
+    run: () => {
+      const document = {
+        ...(readFixture("valid-flow-document.json") as FlowDocument),
+        views: [
+          { id: "overview", title: "Overview" },
+          { id: "operations", title: "Operations" },
+        ],
+        scenarios: [
+          {
+            id: "operations-review",
+            title: "Operations review",
+            viewId: "operations",
+            steps: [
+              {
+                id: "operations-step",
+                title: "Step",
+                body: "Step body",
+                activeNodeIds: ["start"],
+                activeEdgeIds: [],
+              },
+            ],
+          },
+        ],
+      } satisfies FlowDocument;
+      const state = readViewerUrlState(
+        document,
+        "?view=overview&scenario=operations-review&mode=diagram",
+      );
+
+      assert.deepEqual(state, {
+        mode: "diagram",
+        scenarioId: "operations-review",
+        step: 0,
+        viewId: "overview",
+      });
+    },
+  },
+  {
     name: "editor URL state normalizes invalid views to the first available view",
     run: () => {
       const document = readFixture("valid-flow-document.json") as FlowDocument;
