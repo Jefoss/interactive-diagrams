@@ -1,0 +1,731 @@
+:root {
+  color-scheme: light;
+  font-family:
+    "Avenir Next",
+    "Segoe UI Variable Text",
+    "SF Pro Text",
+    "Helvetica Neue",
+    sans-serif;
+  --page-top: #eef4fb;
+  --page-bottom: #f7f9fc;
+  --panel: rgba(255, 255, 255, 0.82);
+  --panel-strong: rgba(255, 255, 255, 0.94);
+  --panel-soft: rgba(248, 250, 252, 0.78);
+  --line: rgba(100, 116, 139, 0.18);
+  --line-strong: rgba(71, 85, 105, 0.22);
+  --text: #0f172a;
+  --muted: #475569;
+  --muted-strong: #334155;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --accent-glow: rgba(37, 99, 235, 0.16);
+  --success-soft: rgba(5, 150, 105, 0.11);
+  --warning-soft: rgba(217, 119, 6, 0.12);
+  --shadow-lg: 0 28px 80px rgba(15, 23, 42, 0.12);
+  --shadow-md: 0 16px 36px rgba(15, 23, 42, 0.08);
+  --node-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  --node-start: linear-gradient(180deg, rgba(239, 246, 255, 0.98), rgba(224, 231, 255, 0.98));
+  --node-decision: linear-gradient(180deg, rgba(255, 247, 237, 0.98), rgba(254, 243, 199, 0.98));
+  --node-end: linear-gradient(180deg, rgba(236, 253, 245, 0.98), rgba(209, 250, 229, 0.98));
+  --node-active: linear-gradient(180deg, rgba(239, 246, 255, 1), rgba(219, 234, 254, 1));
+  --node-border: rgba(148, 163, 184, 0.38);
+  --grid-line: rgba(148, 163, 184, 0.16);
+  --danger-soft: rgba(239, 68, 68, 0.1);
+  --danger-strong: #dc2626;
+  --success-strong: #059669;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100svh;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 26%),
+    linear-gradient(180deg, var(--page-top) 0%, var(--page-bottom) 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 20px;
+  padding: 20px;
+  transition: grid-template-columns 220ms ease, grid-template-rows 220ms ease;
+}
+
+.app-shell.is-diagram-only {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.scenario-panel,
+.diagram-panel,
+.walkthrough-panel {
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--panel);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(18px);
+}
+
+.scenario-panel {
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px;
+}
+
+.diagram-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.92)),
+    var(--panel-strong);
+}
+
+.diagram-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 24px 0;
+}
+
+.diagram-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.diagram-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.walkthrough-panel {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(248, 250, 252, 0.88)),
+    var(--panel-strong);
+}
+
+.panel-animate-in {
+  animation-duration: 240ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.panel-animate-left {
+  animation-name: panel-slide-left-in;
+}
+
+.panel-animate-up {
+  animation-name: panel-slide-up-in;
+}
+
+@keyframes panel-slide-left-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes panel-slide-up-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.panel-intro {
+  display: grid;
+  gap: 8px;
+}
+
+.panel-intro h1,
+.diagram-panel-header h2,
+.walkthrough-copy h2,
+.walkthrough-copy h3 {
+  margin: 0;
+  font-family:
+    "Avenir Next",
+    "Segoe UI Variable Display",
+    "SF Pro Display",
+    sans-serif;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+.panel-intro h1 {
+  font-size: clamp(2rem, 3vw, 2.55rem);
+  line-height: 0.95;
+}
+
+.diagram-panel-header h2,
+.walkthrough-copy h2 {
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.walkthrough-copy h3 {
+  font-size: 1.22rem;
+  line-height: 1.1;
+}
+
+.panel-intro p,
+.diagram-panel-header p,
+.walkthrough-copy p,
+.scenario-description {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--accent-strong);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family:
+    "SF Mono",
+    "IBM Plex Mono",
+    "JetBrains Mono",
+    "Roboto Mono",
+    ui-monospace,
+    monospace;
+}
+
+.panel-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panel-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.panel-pill-strong {
+  border-color: rgba(37, 99, 235, 0.22);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.panel-pill-muted {
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(248, 250, 252, 0.88);
+}
+
+.scenario-list {
+  display: grid;
+  gap: 12px;
+}
+
+.scenario-card {
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 22px;
+  padding: 16px;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 250, 252, 0.82)),
+    var(--panel-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.scenario-card:hover,
+.scenario-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    0 12px 24px rgba(37, 99, 235, 0.08);
+}
+
+.scenario-card.is-selected {
+  border-color: rgba(37, 99, 235, 0.28);
+  background:
+    linear-gradient(180deg, rgba(239, 246, 255, 0.98), rgba(248, 250, 252, 0.96)),
+    var(--panel-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 16px 28px rgba(37, 99, 235, 0.1);
+}
+
+.scenario-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.scenario-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.scenario-meta,
+.step-meta {
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  font-family:
+    "SF Pro Text",
+    "Segoe UI Variable Text",
+    "Avenir Next",
+    sans-serif;
+}
+
+.secondary-button {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  padding: 11px 16px;
+  color: var(--muted-strong);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.secondary-button:hover,
+.secondary-button:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.22);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.08);
+}
+
+.secondary-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.mode-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+  border: 1px solid rgba(37, 99, 235, 0.16);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: var(--muted-strong);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 8px 20px rgba(15, 23, 42, 0.05);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.mode-toggle-label {
+  line-height: 1;
+}
+
+.mode-toggle-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mode-toggle-track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+  transition: background 160ms ease;
+}
+
+.mode-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  transition: transform 160ms ease;
+}
+
+.mode-toggle-input:checked + .mode-toggle-track {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+}
+
+.mode-toggle-input:checked + .mode-toggle-track .mode-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.mode-toggle-input:disabled + .mode-toggle-track {
+  opacity: 0.5;
+}
+
+.mode-toggle:has(.mode-toggle-input:focus-visible) {
+  outline: 2px solid rgba(37, 99, 235, 0.24);
+  outline-offset: 3px;
+}
+
+.diagram-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+  padding: 14px 16px 20px;
+}
+
+.diagram-canvas .react-flow {
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.58), transparent 45%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(248, 250, 252, 0.28));
+}
+
+.diagram-canvas .react-flow__renderer,
+.diagram-canvas .react-flow__pane,
+.diagram-canvas .react-flow__viewport {
+  cursor: grab;
+}
+
+.diagram-canvas .react-flow__renderer:active,
+.diagram-canvas .react-flow__pane:active,
+.diagram-canvas .react-flow__viewport:active {
+  cursor: grabbing;
+}
+
+.diagram-canvas .react-flow__node {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.diagram-canvas .react-flow__controls,
+.diagram-canvas .react-flow__minimap {
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.diagram-canvas .react-flow__edge-path {
+  transition:
+    opacity 180ms ease,
+    stroke 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.diagram-canvas .react-flow__background path {
+  stroke-width: 1;
+}
+
+.flow-node {
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease;
+}
+
+.flow-node.is-dimmed {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.flow-node.is-active {
+  filter: drop-shadow(0 18px 34px var(--accent-glow));
+}
+
+.flow-node-shell {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  padding: 18px 20px;
+  border: 1.5px solid var(--node-border);
+  border-radius: 26px;
+  background: var(--node-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 12px 24px rgba(15, 23, 42, 0.06);
+  text-align: center;
+}
+
+.flow-node-content {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.flow-node.kind-start .flow-node-shell {
+  background: var(--node-start);
+}
+
+.flow-node.kind-decision .flow-node-shell {
+  background: var(--node-decision);
+}
+
+.flow-node.kind-end .flow-node-shell {
+  background: var(--node-end);
+}
+
+.flow-node.tone-info .flow-node-shell {
+  background: var(--node-start);
+}
+
+.flow-node.tone-warning .flow-node-shell {
+  background: var(--node-decision);
+}
+
+.flow-node.tone-success .flow-node-shell {
+  background: linear-gradient(180deg, rgba(236, 253, 245, 0.98), rgba(209, 250, 229, 0.98));
+  border-color: rgba(5, 150, 105, 0.28);
+}
+
+.flow-node.tone-danger .flow-node-shell {
+  background: linear-gradient(180deg, rgba(254, 242, 242, 0.98), rgba(254, 226, 226, 0.98));
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.flow-node.is-active .flow-node-shell {
+  border-color: rgba(51, 65, 85, 0.34);
+  border-width: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.86),
+    0 18px 34px rgba(15, 23, 42, 0.1);
+}
+
+.flow-node.is-active.tone-info .flow-node-shell {
+  background: var(--node-start);
+  border-color: rgba(96, 165, 250, 0.44);
+}
+
+.flow-node.is-active.tone-warning .flow-node-shell {
+  background: var(--node-decision);
+  border-color: rgba(245, 158, 11, 0.42);
+}
+
+.flow-node.is-active.tone-success .flow-node-shell {
+  background: linear-gradient(180deg, rgba(220, 252, 231, 1), rgba(187, 247, 208, 1));
+  border-color: rgba(5, 150, 105, 0.44);
+}
+
+.flow-node.is-active.tone-danger .flow-node-shell {
+  background: linear-gradient(180deg, rgba(254, 226, 226, 1), rgba(252, 165, 165, 0.95));
+  border-color: rgba(220, 38, 38, 0.46);
+}
+
+.flow-node-title {
+  font-size: 1.14rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1.15;
+  font-family:
+    "SF Pro Display",
+    "Segoe UI Variable Display",
+    "Aptos Display",
+    "Avenir Next",
+    "Helvetica Neue",
+    sans-serif;
+  text-wrap: balance;
+  text-shadow: none;
+}
+
+.flow-node-body {
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.45;
+  font-family:
+    "SF Pro Text",
+    "Segoe UI Variable Text",
+    "Avenir Next",
+    sans-serif;
+}
+
+.flow-edge-label {
+  position: absolute;
+  padding: 4px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--muted);
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    color 180ms ease,
+    border-color 180ms ease;
+}
+
+.flow-edge-label.is-active {
+  color: var(--accent-strong);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.flow-edge-label.is-dimmed {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.flow-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.walkthrough-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.walkthrough-summary,
+.step-body {
+  max-width: 74ch;
+}
+
+.walkthrough-actions {
+  align-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(380px, 48svh) auto;
+  }
+
+  .app-shell.is-diagram-only {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(420px, 1fr);
+  }
+
+  .scenario-panel {
+    grid-row: auto;
+  }
+
+  .scenario-list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(250px, 74vw);
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .diagram-panel-header,
+  .walkthrough-panel {
+    flex-direction: column;
+  }
+
+  .mode-toggle {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+
+  .walkthrough-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .scenario-panel,
+  .walkthrough-panel,
+  .diagram-panel-header {
+    padding: 18px;
+  }
+
+  .diagram-canvas {
+    min-height: 320px;
+    padding: 6px 6px 14px;
+  }
+
+  .scenario-card-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .walkthrough-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+}

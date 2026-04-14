@@ -1,48 +1,189 @@
 {
   "version": "1.0",
   "title": "User onboarding flow",
+  "views": [
+    {
+      "id": "overview",
+      "title": "Lifecycle overview",
+      "description": "From incoming signup to approval, rejection, or manual review."
+    }
+  ],
   "nodes": [
     {
       "id": "start",
       "kind": "start",
+      "tone": "info",
       "title": "Receive signup",
       "body": "A signup request arrives from the public registration form."
     },
     {
+      "id": "validate",
+      "kind": "process",
+      "title": "Validate payload",
+      "body": "Validate the payload and enrich it with account metadata."
+    },
+    {
+      "id": "risk-check",
+      "kind": "decision",
+      "tone": "warning",
+      "title": "Assess risk",
+      "body": "Apply policy checks and route the request based on its risk score."
+    },
+    {
       "id": "review",
       "kind": "process",
-      "title": "Review submission",
-      "body": "Validate the payload and enrich it with account metadata."
+      "title": "Manual review",
+      "body": "An operator reviews the signup and records an explicit approval or denial."
     },
     {
       "id": "approved",
       "kind": "end",
+      "tone": "success",
       "title": "Provision account",
       "body": "Create the workspace and send the confirmation email."
+    },
+    {
+      "id": "rejected",
+      "kind": "end",
+      "tone": "danger",
+      "title": "Reject signup",
+      "body": "Decline the request and notify the user that more information is required."
     }
   ],
   "edges": [
     {
-      "id": "start-to-review",
+      "id": "start-to-validate",
       "source": "start",
-      "target": "review"
+      "target": "validate"
+    },
+    {
+      "id": "validate-to-risk",
+      "source": "validate",
+      "target": "risk-check"
+    },
+    {
+      "id": "risk-to-approved",
+      "source": "risk-check",
+      "target": "approved",
+      "label": "low risk"
+    },
+    {
+      "id": "risk-to-review",
+      "source": "risk-check",
+      "target": "review",
+      "label": "needs review"
     },
     {
       "id": "review-to-approved",
       "source": "review",
       "target": "approved",
-      "label": "valid"
+      "label": "approved"
+    },
+    {
+      "id": "review-to-rejected",
+      "source": "review",
+      "target": "rejected",
+      "label": "denied"
     }
   ],
   "highlights": [
     {
-      "id": "review-focus",
-      "nodeId": "review",
+      "id": "validate-focus",
+      "nodeId": "validate",
       "field": "body",
       "startOffset": 0,
       "endOffset": 8,
       "tone": "warning",
       "note": "Validation happens first."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "happy-path",
+      "title": "Happy path",
+      "description": "A clean signup moves straight through validation and approval.",
+      "viewId": "overview",
+      "steps": [
+        {
+          "id": "happy-intake",
+          "title": "Accept and validate the request",
+          "body": "The runtime accepts the signup, validates the payload, and adds account context before any routing decisions happen.",
+          "activeNodeIds": ["start", "validate"],
+          "activeEdgeIds": ["start-to-validate"]
+        },
+        {
+          "id": "happy-risk-check",
+          "title": "Apply automated checks",
+          "body": "Policy checks run on the normalized signup to determine whether the flow can stay fully automated.",
+          "activeNodeIds": ["validate", "risk-check"],
+          "activeEdgeIds": ["validate-to-risk"]
+        },
+        {
+          "id": "happy-provision",
+          "title": "Provision the account",
+          "body": "Low-risk signups immediately provision a workspace and send the confirmation email.",
+          "activeNodeIds": ["risk-check", "approved"],
+          "activeEdgeIds": ["risk-to-approved"]
+        }
+      ]
+    },
+    {
+      "id": "manual-review",
+      "title": "Manual review",
+      "description": "Risky signups branch into operator review before they can be approved.",
+      "viewId": "overview",
+      "steps": [
+        {
+          "id": "review-intake",
+          "title": "Run the initial validation",
+          "body": "The request still goes through the same intake and normalization path before any exception handling begins.",
+          "activeNodeIds": ["start", "validate"],
+          "activeEdgeIds": ["start-to-validate"]
+        },
+        {
+          "id": "review-routing",
+          "title": "Escalate to manual review",
+          "body": "Automated checks flag the signup, so the diagram branches into the operator review queue instead of provisioning immediately.",
+          "activeNodeIds": ["risk-check", "review"],
+          "activeEdgeIds": ["validate-to-risk", "risk-to-review"]
+        },
+        {
+          "id": "review-approval",
+          "title": "Approve after inspection",
+          "body": "An operator signs off on the request, which reconnects the scenario to the standard provisioning path.",
+          "activeNodeIds": ["review", "approved"],
+          "activeEdgeIds": ["review-to-approved"]
+        }
+      ]
+    },
+    {
+      "id": "rejected-path",
+      "title": "Rejected path",
+      "description": "A risky signup is escalated and then denied during manual review.",
+      "viewId": "overview",
+      "steps": [
+        {
+          "id": "rejected-intake",
+          "title": "Validate the request",
+          "body": "The request enters the standard validation path before any manual handling begins.",
+          "activeNodeIds": ["start", "validate"],
+          "activeEdgeIds": ["start-to-validate"]
+        },
+        {
+          "id": "rejected-routing",
+          "title": "Route into manual review",
+          "body": "Risk checks flag the signup and send it to the operator review queue instead of auto-provisioning.",
+          "activeNodeIds": ["risk-check", "review"],
+          "activeEdgeIds": ["validate-to-risk", "risk-to-review"]
+        },
+        {
+          "id": "rejected-denial",
+          "title": "Deny the signup",
+          "body": "The operator rejects the request and the runtime emits the denial outcome instead of provisioning an account.",
+          "activeNodeIds": ["review", "rejected"],
+          "activeEdgeIds": ["review-to-rejected"]
+        }
+      ]
     }
   ]
 }

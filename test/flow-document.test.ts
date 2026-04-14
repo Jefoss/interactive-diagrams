@@ -25,7 +25,7 @@ const tests: Array<{ name: string; run: () => void }> = [
     },
   },
   {
-    name: "valid fixture passes validation",
+    name: "valid fixture with scenarios passes validation",
     run: () => {
       const result = validateFlowDocument(
         readFixture("valid-flow-document.json") as FlowDocument,
@@ -33,6 +33,19 @@ const tests: Array<{ name: string; run: () => void }> = [
 
       assert.equal(result.valid, true);
       assert.deepEqual(result.issues, []);
+    },
+  },
+  {
+    name: "scenario references are validated",
+    run: () => {
+      const input = readFixture("valid-flow-document.json") as FlowDocument;
+
+      input.scenarios?.[0]?.steps[0]?.activeNodeIds.push("missing-node");
+
+      const result = validateFlowDocument(input);
+
+      assert.equal(result.valid, false);
+      assert.equal(result.issues.some((issue) => issue.code === "missing-reference"), true);
     },
   },
   {

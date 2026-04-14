@@ -4,6 +4,7 @@ import {
   FlowDocumentSchema,
   type FlowDocument,
   type FlowHighlight,
+  type FlowScenario,
 } from "./schema.js";
 
 export type ValidationIssueCode =
@@ -40,9 +41,15 @@ export function validateFlowDocument(input: unknown): ValidationResult {
   const issues: ValidationIssue[] = [];
   const seenIds = new Map<string, string>();
   const nodeIds = new Set(document.nodes.map((node) => node.id));
+  const edgeIds = new Set(document.edges.map((edge) => edge.id));
+  const viewIds = new Set((document.views ?? []).map((view) => view.id));
   const nodesById = new Map<string, FlowDocument["nodes"][number]>(
     document.nodes.map((node) => [node.id, node]),
   );
+
+  (document.views ?? []).forEach((view, index) => {
+    collectDuplicateId(view.id, `/views/${index}/id`, seenIds, issues);
+  });
 
   document.nodes.forEach((node, index) => {
     collectDuplicateId(node.id, `/nodes/${index}/id`, seenIds, issues);
@@ -71,6 +78,11 @@ export function validateFlowDocument(input: unknown): ValidationResult {
   (document.highlights ?? []).forEach((highlight, index) => {
     collectDuplicateId(highlight.id, `/highlights/${index}/id`, seenIds, issues);
     validateHighlight(highlight, index, nodesById, issues);
+  });
+
+  (document.scenarios ?? []).forEach((scenario, index) => {
+    collectDuplicateId(scenario.id, `/scenarios/${index}/id`, seenIds, issues);
+    validateScenario(scenario, index, viewIds, nodeIds, edgeIds, seenIds, issues);
   });
 
   return issues.length === 0
@@ -132,4 +144,51 @@ function validateHighlight(
       message: `Highlight range ends at ${highlight.endOffset}, beyond body length ${bodyLength}`,
     });
   }
+}
+
+function validateScenario(
+  scenario: FlowScenario,
+  scenarioIndex: number,
+  viewIds: Set<string>,
+  nodeIds: Set<string>,
+  edgeIds: Set<string>,
+  seenIds: Map<string, string>,
+  issues: ValidationIssue[],
+): void {
+  if (scenario.viewId && !viewIds.has(scenario.viewId)) {
+    issues.push({
+      code: "missing-reference",
+      path: `/scenarios/${scenarioIndex}/viewId`,
+      message: `Scenario viewId "${scenario.viewId}" does not match any view id`,
+    });
+  }
+
+  scenario.steps.forEach((step, stepIndex) => {
+    collectDuplicateId(
+      step.id,
+      `/scenarios/${scenarioIndex}/steps/${stepIndex}/id`,
+      seenIds,
+      issues,
+    );
+
+    step.activeNodeIds.forEach((nodeId, nodeIndex) => {
+      if (!nodeIds.has(nodeId)) {
+        issues.push({
+          code: "missing-reference",
+          path: `/scenarios/${scenarioIndex}/steps/${stepIndex}/activeNodeIds/${nodeIndex}`,
+          message: `Scenario step node "${nodeId}" does not match any node id`,
+        });
+      }
+    });
+
+    step.activeEdgeIds.forEach((edgeId, edgeIndex) => {
+      if (!edgeIds.has(edgeId)) {
+        issues.push({
+          code: "missing-reference",
+          path: `/scenarios/${scenarioIndex}/steps/${stepIndex}/activeEdgeIds/${edgeIndex}`,
+          message: `Scenario step edge "${edgeId}" does not match any edge id`,
+        });
+      }
+    });
+  });
 }
