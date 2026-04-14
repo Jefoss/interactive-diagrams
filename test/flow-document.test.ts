@@ -8,6 +8,17 @@ import {
   type FlowDocument,
 } from "../src/flow-document/index.js";
 import {
+  applyEdgeForm,
+  applyNodeForm,
+  buildSuggestedEdgeId,
+  buildUniqueIdentifier,
+  getEdgeDeleteBlockers,
+  shouldAutoRegenerateIdentifier,
+  slugifyIdentifier,
+  type EdgeFormValues,
+  type NodeFormValues,
+} from "../src/runtime/editor-document.js";
+import {
   buildEditorUrlSearchParams,
   buildViewerUrlSearchParams,
   readEditorUrlState,
@@ -280,6 +291,112 @@ const tests: Array<{ name: string; run: () => void }> = [
         }).toString(),
         "view=overview",
       );
+    },
+  },
+  {
+    name: "slugified ids are normalized and uniqued",
+    run: () => {
+      assert.equal(slugifyIdentifier("Risk Check / Approval"), "risk-check-approval");
+      assert.equal(
+        buildUniqueIdentifier("Risk Check", ["risk-check", "risk-check-2"], "node"),
+        "risk-check-3",
+      );
+    },
+  },
+  {
+    name: "edge id suggestions use source and target",
+    run: () => {
+      assert.equal(
+        buildSuggestedEdgeId(
+          {
+            label: "Approved",
+            source: "manual-review",
+            target: "approved",
+          },
+          [],
+        ),
+        "manual-review-to-approved-approved",
+      );
+    },
+  },
+  {
+    name: "existing records keep stable ids until the user changes them explicitly",
+    run: () => {
+      assert.equal(shouldAutoRegenerateIdentifier("existing", false), false);
+      assert.equal(shouldAutoRegenerateIdentifier("new", false), true);
+      assert.equal(shouldAutoRegenerateIdentifier("new", true), false);
+    },
+  },
+  {
+    name: "renaming a node updates dependent references safely",
+    run: () => {
+      const document = readFixture("valid-flow-document.json") as FlowDocument;
+      const result = applyNodeForm(document, "validate", {
+        body: "Validate the payload and enrich it with account metadata.",
+        id: "validate-request",
+        kind: "process",
+        title: "Validate payload",
+        tone: "",
+      } satisfies NodeFormValues);
+
+      assert.equal(result.ok, true);
+
+      if (!result.ok) {
+        return;
+      }
+
+      assert.equal(result.document.nodes.some((node) => node.id === "validate-request"), true);
+      assert.equal(
+        result.document.edges.some(
+          (edge) => edge.id === "validate-to-risk" && edge.source === "validate-request",
+        ),
+        true,
+      );
+      assert.equal(
+        result.document.highlights?.some((highlight) => highlight.nodeId === "validate-request"),
+        true,
+      );
+      assert.equal(
+        result.document.scenarios?.some((scenario) =>
+          scenario.steps.some((step) => step.activeNodeIds.includes("validate-request")),
+        ),
+        true,
+      );
+    },
+  },
+  {
+    name: "renaming an edge updates scenario references safely",
+    run: () => {
+      const document = readFixture("valid-flow-document.json") as FlowDocument;
+      const result = applyEdgeForm(document, "review-to-approved", {
+        id: "manual-review-to-approved",
+        label: "approved",
+        source: "review",
+        target: "approved",
+      } satisfies EdgeFormValues);
+
+      assert.equal(result.ok, true);
+
+      if (!result.ok) {
+        return;
+      }
+
+      assert.equal(
+        result.document.scenarios?.some((scenario) =>
+          scenario.steps.some((step) => step.activeEdgeIds.includes("manual-review-to-approved")),
+        ),
+        true,
+      );
+    },
+  },
+  {
+    name: "edge delete blockers surface scenario references",
+    run: () => {
+      const document = readFixture("valid-flow-document.json") as FlowDocument;
+      const blockers = getEdgeDeleteBlockers(document, "review-to-approved");
+
+      assert.equal(blockers.length > 0, true);
+      assert.equal(blockers.some((message) => message.includes("review-approval")), true);
     },
   },
 ];

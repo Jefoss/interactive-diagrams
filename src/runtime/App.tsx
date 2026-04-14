@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import type { FlowDocument } from "../flow-document/index.js";
@@ -25,14 +25,16 @@ interface DiagramRouteFrameProps {
 }
 
 export function App({ document }: AppProps) {
+  const [editableDocument, setEditableDocument] = useState(document);
+
   return (
     <Routes>
-      <Route path="/" element={<HomePage document={document} />} />
+      <Route path="/" element={<HomePage document={editableDocument} />} />
       <Route
         path="/view"
         element={
           <DiagramRouteFrame>
-            <DiagramWorkspace document={document} pageMode="viewer" />
+            <DiagramWorkspace document={editableDocument} pageMode="viewer" />
           </DiagramRouteFrame>
         }
       />
@@ -40,7 +42,11 @@ export function App({ document }: AppProps) {
         path="/edit"
         element={
           <DiagramRouteFrame>
-            <DiagramWorkspace document={document} pageMode="editor" />
+            <DiagramWorkspace
+              document={editableDocument}
+              onDocumentChange={setEditableDocument}
+              pageMode="editor"
+            />
           </DiagramRouteFrame>
         }
       />

@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import type { FlowDocument, FlowScenario } from "../flow-document/index.js";
 import { DiagramCanvas } from "./components/DiagramCanvas.js";
+import { EditorAuthoringPanel } from "./components/EditorAuthoringPanel.js";
 import { ScenarioListPanel } from "./components/ScenarioListPanel.js";
 import { WalkthroughPanel } from "./components/WalkthroughPanel.js";
 import {
@@ -21,11 +22,20 @@ interface HighlightState {
 
 interface DiagramWorkspaceProps {
   document: FlowDocument;
+  onDocumentChange?: (document: FlowDocument) => void;
   pageMode: "viewer" | "editor";
 }
 
-export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) {
+export function DiagramWorkspace({
+  document,
+  onDocumentChange,
+  pageMode,
+}: DiagramWorkspaceProps) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [editorHighlightState, setEditorHighlightState] = useState<HighlightState>({
+    activeEdgeIds: new Set(),
+    activeNodeIds: new Set(),
+  });
   const scenarios = document.scenarios ?? [];
   const search = searchParams.toString();
   const viewerState = pageMode === "viewer" ? readViewerUrlState(document, searchParams) : null;
@@ -45,7 +55,8 @@ export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) 
   const stepIndex = getStepIndex(selectedScenario, viewerState?.step ?? 0);
   const currentStep =
     isInteractive && selectedScenario ? selectedScenario.steps[stepIndex] : null;
-  const highlightState = buildHighlightState(selectedScenario, stepIndex, isInteractive);
+  const viewerHighlightState = buildHighlightState(selectedScenario, stepIndex, isInteractive);
+  const highlightState = pageMode === "editor" ? editorHighlightState : viewerHighlightState;
   const hasScenarios = pageMode === "viewer" && scenarios.length > 0;
   const isAtFirstStep = stepIndex === 0;
   const isAtLastStep =
@@ -168,10 +179,27 @@ export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) 
   const headingBody =
     pageMode === "viewer"
       ? selectedView?.description ?? "Explore the full flow or follow a guided replay."
-      : "Editing tools will land here next. For now this page shows the diagram canvas without walkthrough controls.";
+      : "Edit the flow through safe node and edge forms while the canvas updates from the current saved document.";
 
   return (
-    <div className={["app-shell", isInteractive ? "is-interactive" : "is-diagram-only"].join(" ")}>
+    <div
+      className={[
+        "app-shell",
+        pageMode === "editor" ? "is-editor" : "",
+        pageMode === "viewer" && !isInteractive ? "is-diagram-only" : "",
+        isInteractive ? "is-interactive" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {pageMode === "editor" && onDocumentChange ? (
+        <EditorAuthoringPanel
+          document={document}
+          onDocumentChange={onDocumentChange}
+          onHighlightChange={setEditorHighlightState}
+        />
+      ) : null}
+
       {isInteractive ? (
         <ScenarioListPanel
           document={document}
@@ -193,14 +221,16 @@ export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) 
                   ? isInteractive
                     ? "Interactive walkthrough"
                     : "Full diagram"
-                  : "Editor placeholder"}
+                  : "Form authoring"}
               </span>
               {pageMode === "viewer" && isInteractive && selectedScenario ? (
                 <span className="panel-pill">{selectedScenario.title}</span>
               ) : pageMode === "viewer" ? (
                 <span className="panel-pill panel-pill-muted">Diagram overview</span>
               ) : (
-                <span className="panel-pill panel-pill-muted">Scenarios hidden</span>
+                <span className="panel-pill panel-pill-muted">
+                  Save node and edge drafts explicitly
+                </span>
               )}
             </div>
           </div>
