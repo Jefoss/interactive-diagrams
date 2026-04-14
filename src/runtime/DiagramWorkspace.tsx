@@ -68,31 +68,6 @@ export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) 
     setSearchParams(new URLSearchParams(canonicalSearch), { replace: true });
   }, [canonicalSearch, search, setSearchParams]);
 
-  function handleViewSelect(nextViewId: string): void {
-    const normalizedViewId = nextViewId.length > 0 ? nextViewId : null;
-
-    if (pageMode === "editor") {
-      setSearchParams(buildEditorUrlSearchParams({ viewId: normalizedViewId }));
-      return;
-    }
-
-    if (!viewerState) {
-      return;
-    }
-
-    const scenarioConflictsWithView =
-      selectedScenario?.viewId !== undefined && selectedScenario.viewId !== normalizedViewId;
-
-    setSearchParams(
-      buildViewerUrlSearchParams({
-        mode: scenarioConflictsWithView ? "diagram" : viewerState.mode,
-        scenarioId: scenarioConflictsWithView ? null : viewerState.scenarioId,
-        step: scenarioConflictsWithView ? 0 : viewerState.step,
-        viewId: normalizedViewId,
-      }),
-    );
-  }
-
   function handleScenarioSelect(scenario: FlowScenario): void {
     if (pageMode !== "viewer" || !viewerState) {
       return;
@@ -229,39 +204,21 @@ export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) 
               )}
             </div>
           </div>
-          <div className="diagram-controls">
-            {document.views && document.views.length > 0 ? (
-              <label className="view-select" aria-label="Select diagram view">
-                <span className="view-select-label">View</span>
-                <select
-                  className="view-select-input"
-                  onChange={(event) => handleViewSelect(event.target.value)}
-                  value={selectedView?.id ?? document.views[0]?.id ?? ""}
-                >
-                  {document.views.map((view) => (
-                    <option key={view.id} value={view.id}>
-                      {view.title}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            {pageMode === "viewer" ? (
-              <label className="mode-toggle" aria-label="Toggle interactive mode">
-                <span className="mode-toggle-label">Interactive mode</span>
-                <input
-                  checked={isInteractive}
-                  className="mode-toggle-input"
-                  disabled={!hasScenarios}
-                  onChange={(event) => handleInteractiveModeChange(event.target.checked)}
-                  type="checkbox"
-                />
-                <span className="mode-toggle-track" aria-hidden="true">
-                  <span className="mode-toggle-thumb" />
-                </span>
-              </label>
-            ) : null}
-          </div>
+          {pageMode === "viewer" ? (
+            <label className="mode-toggle" aria-label="Toggle interactive mode">
+              <span className="mode-toggle-label">Interactive mode</span>
+              <input
+                checked={isInteractive}
+                className="mode-toggle-input"
+                disabled={!hasScenarios}
+                onChange={(event) => handleInteractiveModeChange(event.target.checked)}
+                type="checkbox"
+              />
+              <span className="mode-toggle-track" aria-hidden="true">
+                <span className="mode-toggle-thumb" />
+              </span>
+            </label>
+          ) : null}
         </div>
 
         <DiagramCanvas
