@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "title": "Duplicate identifier example",
+  "nodes": [
+    {
+      "id": "shared-id",
+      "kind": "start",
+      "title": "Start",
+      "body": "Start body"
+    },
+    {
+      "id": "review",
+      "kind": "process",
+      "title": "Review",
+      "body": "Review body"
+    }
+  ],
+  "edges": [
+    {
+      "id": "shared-id",
+      "source": "shared-id",
+      "target": "review"
+    }
+  ],
+  "highlights": [
+    {
+      "id": "review-highlight",
+      "nodeId": "review",
+      "field": "body",
+      "startOffset": 0,
+      "endOffset": 6,
+      "tone": "info"
+    }
+  ]
+}
