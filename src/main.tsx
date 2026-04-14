@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 
 import flowDocumentJson from "../fixtures/valid-flow-document.json";
 import { validateFlowDocument } from "./flow-document/index.js";
@@ -19,6 +20,8 @@ if (!validation.valid || !validation.document) {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App document={validation.document} />
+    <BrowserRouter>
+      <App document={validation.document} />
+    </BrowserRouter>
   </React.StrictMode>,
 );
