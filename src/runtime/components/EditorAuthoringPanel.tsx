@@ -15,6 +15,7 @@ import {
   deleteNode,
   getEdgeDeleteBlockers,
   getNodeDeleteBlockers,
+  shouldAutoRegenerateIdentifier,
   type EdgeFormValues,
   type NodeFormValues,
 } from "../editor-document.js";
@@ -184,7 +185,10 @@ export function EditorAuthoringPanel({
         [key]: value,
       };
 
-      if ((key === "title" || key === "kind") && !current.idTouched) {
+      if (
+        (key === "title" || key === "kind") &&
+        shouldAutoRegenerateIdentifier(current.mode, current.idTouched)
+      ) {
         nextValues.id = buildSuggestedNodeId(
           {
             kind: nextValues.kind,
@@ -221,7 +225,10 @@ export function EditorAuthoringPanel({
         [key]: value,
       };
 
-      if ((key === "label" || key === "source" || key === "target") && !current.idTouched) {
+      if (
+        (key === "label" || key === "source" || key === "target") &&
+        shouldAutoRegenerateIdentifier(current.mode, current.idTouched)
+      ) {
         nextValues.id = buildSuggestedEdgeId(
           {
             label: nextValues.label,

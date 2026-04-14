@@ -23,6 +23,8 @@ export interface EdgeFormValues {
   target: string;
 }
 
+export type DraftMode = "existing" | "new";
+
 export type DocumentEditResult =
   | {
       document: FlowDocument;
@@ -137,6 +139,10 @@ export function buildSuggestedEdgeId(
     .join(" ");
 
   return buildUniqueIdentifier(basis, reservedIds, "edge");
+}
+
+export function shouldAutoRegenerateIdentifier(mode: DraftMode, idTouched: boolean): boolean {
+  return mode === "new" && !idTouched;
 }
 
 export function applyNodeForm(
