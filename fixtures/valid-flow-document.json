@@ -1,0 +1,48 @@
+{
+  "version": "1.0",
+  "title": "User onboarding flow",
+  "nodes": [
+    {
+      "id": "start",
+      "kind": "start",
+      "title": "Receive signup",
+      "body": "A signup request arrives from the public registration form."
+    },
+    {
+      "id": "review",
+      "kind": "process",
+      "title": "Review submission",
+      "body": "Validate the payload and enrich it with account metadata."
+    },
+    {
+      "id": "approved",
+      "kind": "end",
+      "title": "Provision account",
+      "body": "Create the workspace and send the confirmation email."
+    }
+  ],
+  "edges": [
+    {
+      "id": "start-to-review",
+      "source": "start",
+      "target": "review"
+    },
+    {
+      "id": "review-to-approved",
+      "source": "review",
+      "target": "approved",
+      "label": "valid"
+    }
+  ],
+  "highlights": [
+    {
+      "id": "review-focus",
+      "nodeId": "review",
+      "field": "body",
+      "startOffset": 0,
+      "endOffset": 8,
+      "tone": "warning",
+      "note": "Validation happens first."
+    }
+  ]
+}

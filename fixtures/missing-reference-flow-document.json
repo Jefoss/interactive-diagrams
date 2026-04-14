@@ -1,0 +1,29 @@
+{
+  "version": "1.0",
+  "title": "Missing reference example",
+  "nodes": [
+    {
+      "id": "start",
+      "kind": "start",
+      "title": "Start",
+      "body": "Start body"
+    }
+  ],
+  "edges": [
+    {
+      "id": "broken-edge",
+      "source": "start",
+      "target": "missing-node"
+    }
+  ],
+  "highlights": [
+    {
+      "id": "orphan-highlight",
+      "nodeId": "missing-node",
+      "field": "body",
+      "startOffset": 0,
+      "endOffset": 4,
+      "tone": "danger"
+    }
+  ]
+}

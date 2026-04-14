@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "title": "Invalid highlight example",
+  "nodes": [
+    {
+      "id": "review",
+      "kind": "process",
+      "title": "Review",
+      "body": "Review body"
+    }
+  ],
+  "edges": [],
+  "highlights": [
+    {
+      "id": "bad-range",
+      "nodeId": "review",
+      "field": "body",
+      "startOffset": 5,
+      "endOffset": 20,
+      "tone": "warning"
+    }
+  ]
+}

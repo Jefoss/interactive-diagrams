@@ -1,4 +1,7 @@
 
 # dev-3.0 local config
 .dev3/
+.codex/
 .DS_Store
+dist/
+node_modules/
