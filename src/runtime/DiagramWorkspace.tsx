@@ -1,19 +1,18 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import type { FlowDocument, FlowScenario } from "../flow-document/index.js";
 import { DiagramCanvas } from "./components/DiagramCanvas.js";
 import { ScenarioListPanel } from "./components/ScenarioListPanel.js";
 import { WalkthroughPanel } from "./components/WalkthroughPanel.js";
-
-type ViewerMode = "diagram" | "interactive";
-
-interface ViewerState {
-  mode: ViewerMode;
-  scenarioId: string | null;
-  step: number;
-  viewId: string | null;
-}
+import {
+  buildEditorUrlSearchParams,
+  buildViewerUrlSearchParams,
+  findScenario,
+  readEditorUrlState,
+  readViewerUrlState,
+  resolveView,
+} from "./url-state.js";
 
 interface HighlightState {
   activeNodeIds: Set<string>;
@@ -26,142 +25,142 @@ interface DiagramWorkspaceProps {
 }
 
 export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const scenarios = document.scenarios ?? [];
-  const [viewerState, setViewerState] = useState(() =>
-    pageMode === "viewer"
-      ? readViewerState(document, location.search)
-      : createDiagramOnlyState(document),
-  );
-
-  useEffect(() => {
-    if (pageMode !== "viewer") {
-      return;
-    }
-
-    setViewerState(readViewerState(document, location.search));
-  }, [document, location.search, pageMode]);
-
+  const search = searchParams.toString();
+  const viewerState = pageMode === "viewer" ? readViewerUrlState(document, searchParams) : null;
+  const editorState = pageMode === "editor" ? readEditorUrlState(document, searchParams) : null;
   const selectedScenario =
-    pageMode === "viewer" ? resolveScenario(scenarios, viewerState.scenarioId) : null;
-  const selectedView = resolveView(document, viewerState.viewId);
+    pageMode === "viewer" && viewerState
+      ? findScenario(scenarios, viewerState.scenarioId)
+      : null;
+  const selectedView = resolveView(
+    document.views,
+    pageMode === "viewer" ? viewerState?.viewId ?? null : editorState?.viewId ?? null,
+  );
   const isInteractive =
     pageMode === "viewer" &&
-    viewerState.mode === "interactive" &&
+    viewerState?.mode === "interactive" &&
     selectedScenario !== null;
-  const stepIndex = getStepIndex(selectedScenario, viewerState.step);
-  const currentStep = isInteractive ? selectedScenario.steps[stepIndex] : null;
+  const stepIndex = getStepIndex(selectedScenario, viewerState?.step ?? 0);
+  const currentStep =
+    isInteractive && selectedScenario ? selectedScenario.steps[stepIndex] : null;
   const highlightState = buildHighlightState(selectedScenario, stepIndex, isInteractive);
   const hasScenarios = pageMode === "viewer" && scenarios.length > 0;
   const isAtFirstStep = stepIndex === 0;
   const isAtLastStep =
     selectedScenario === null || stepIndex === selectedScenario.steps.length - 1;
+  const canonicalSearch =
+    pageMode === "viewer" && viewerState
+      ? buildViewerUrlSearchParams({
+          mode: isInteractive ? "interactive" : "diagram",
+          scenarioId: viewerState.scenarioId,
+          step: stepIndex,
+          viewId: selectedView?.id ?? null,
+        }).toString()
+      : buildEditorUrlSearchParams({ viewId: selectedView?.id ?? null }).toString();
 
   useEffect(() => {
-    if (pageMode !== "viewer") {
+    if (search === canonicalSearch) {
       return;
     }
 
-    const nextSearch = buildViewerSearch({
-      isInteractive,
-      scenarioId: selectedScenario?.id ?? null,
-      stepIndex,
-      viewId: selectedView?.id ?? null,
-    });
-
-    if (location.search === nextSearch) {
-      return;
-    }
-
-    navigate(
-      {
-        pathname: location.pathname,
-        search: nextSearch,
-      },
-      { replace: true },
-    );
-  }, [
-    isInteractive,
-    location.pathname,
-    location.search,
-    navigate,
-    pageMode,
-    selectedScenario,
-    selectedView,
-    stepIndex,
-  ]);
+    setSearchParams(new URLSearchParams(canonicalSearch), { replace: true });
+  }, [canonicalSearch, search, setSearchParams]);
 
   function handleScenarioSelect(scenario: FlowScenario): void {
-    if (pageMode !== "viewer") {
+    if (pageMode !== "viewer" || !viewerState) {
       return;
     }
 
-    setViewerState((current) => ({
-      ...current,
-      mode: "interactive",
-      scenarioId: scenario.id,
-      step: 0,
-      viewId: scenario.viewId ?? current.viewId,
-    }));
+    setSearchParams(
+      buildViewerUrlSearchParams({
+        ...viewerState,
+        mode: "interactive",
+        scenarioId: scenario.id,
+        step: 0,
+        viewId: scenario.viewId ?? selectedView?.id ?? null,
+      }),
+    );
   }
 
   function handleInteractiveModeChange(enabled: boolean): void {
-    if (pageMode !== "viewer") {
+    if (pageMode !== "viewer" || !viewerState) {
       return;
     }
 
     if (!enabled) {
-      setViewerState((current) => ({
-        ...current,
-        mode: "diagram",
-        step: 0,
-      }));
+      setSearchParams(
+        buildViewerUrlSearchParams({
+          ...viewerState,
+          mode: "diagram",
+          step: 0,
+          viewId: selectedView?.id ?? null,
+        }),
+      );
       return;
     }
 
-    const fallbackScenario = selectedScenario ?? scenarios[0] ?? null;
+    const fallbackScenario =
+      selectedScenario ??
+      findScenarioForView(scenarios, selectedView?.id ?? null) ??
+      scenarios[0] ??
+      null;
 
     if (!fallbackScenario) {
       return;
     }
 
-    setViewerState((current) => ({
-      ...current,
-      mode: "interactive",
-      scenarioId: current.scenarioId ?? fallbackScenario.id,
-      step: current.scenarioId ? current.step : 0,
-      viewId: fallbackScenario.viewId ?? current.viewId,
-    }));
+    setSearchParams(
+      buildViewerUrlSearchParams({
+        mode: "interactive",
+        scenarioId: fallbackScenario.id,
+        step: selectedScenario ? viewerState.step : 0,
+        viewId: fallbackScenario.viewId ?? selectedView?.id ?? null,
+      }),
+    );
   }
 
   function handlePrev(): void {
-    if (!selectedScenario) {
+    if (!selectedScenario || !viewerState) {
       return;
     }
 
-    setViewerState((current) => ({
-      ...current,
-      step: clamp(current.step - 1, 0, selectedScenario.steps.length - 1),
-    }));
+    setSearchParams(
+      buildViewerUrlSearchParams({
+        ...viewerState,
+        step: clamp(viewerState.step - 1, 0, selectedScenario.steps.length - 1),
+        viewId: selectedView?.id ?? null,
+      }),
+    );
   }
 
   function handleNext(): void {
-    if (!selectedScenario) {
+    if (!selectedScenario || !viewerState) {
       return;
     }
 
-    setViewerState((current) => ({
-      ...current,
-      step: clamp(current.step + 1, 0, selectedScenario.steps.length - 1),
-    }));
+    setSearchParams(
+      buildViewerUrlSearchParams({
+        ...viewerState,
+        step: clamp(viewerState.step + 1, 0, selectedScenario.steps.length - 1),
+        viewId: selectedView?.id ?? null,
+      }),
+    );
   }
 
   function handleReset(): void {
-    setViewerState((current) => ({
-      ...current,
-      step: 0,
-    }));
+    if (!viewerState) {
+      return;
+    }
+
+    setSearchParams(
+      buildViewerUrlSearchParams({
+        ...viewerState,
+        step: 0,
+        viewId: selectedView?.id ?? null,
+      }),
+    );
   }
 
   const headingEyebrow = pageMode === "viewer" ? "Diagram viewer" : "Diagram editor";
@@ -246,34 +245,6 @@ export function DiagramWorkspace({ document, pageMode }: DiagramWorkspaceProps) 
   );
 }
 
-function createDiagramOnlyState(document: FlowDocument): ViewerState {
-  return {
-    mode: "diagram",
-    scenarioId: null,
-    step: 0,
-    viewId: document.views?.[0]?.id ?? null,
-  };
-}
-
-function readViewerState(document: FlowDocument, search: string): ViewerState {
-  const params = new URLSearchParams(search);
-  const scenarios = document.scenarios ?? [];
-  const requestedMode = params.get("mode");
-  const requestedStep = Number(params.get("step") ?? 0);
-  const requestedScenarioId = params.get("scenario") ?? scenarios[0]?.id ?? null;
-  const selectedScenario = resolveScenario(scenarios, requestedScenarioId);
-  const interactiveModeRequested =
-    requestedMode === "interactive" || (requestedMode === null && selectedScenario !== null);
-  const initialViewId = params.get("view") ?? selectedScenario?.viewId ?? document.views?.[0]?.id ?? null;
-
-  return {
-    mode: interactiveModeRequested && selectedScenario ? "interactive" : "diagram",
-    scenarioId: selectedScenario?.id ?? null,
-    step: Number.isFinite(requestedStep) ? requestedStep : 0,
-    viewId: initialViewId,
-  };
-}
-
 function buildHighlightState(
   scenario: FlowScenario | null,
   stepIndex: number,
@@ -294,32 +265,6 @@ function buildHighlightState(
   return { activeNodeIds, activeEdgeIds };
 }
 
-function buildViewerSearch(input: {
-  isInteractive: boolean;
-  scenarioId: string | null;
-  stepIndex: number;
-  viewId: string | null;
-}): string {
-  const params = new URLSearchParams();
-
-  if (input.viewId) {
-    params.set("view", input.viewId);
-  }
-
-  if (input.scenarioId) {
-    params.set("scenario", input.scenarioId);
-  }
-
-  params.set("mode", input.isInteractive ? "interactive" : "diagram");
-
-  if (input.isInteractive) {
-    params.set("step", String(input.stepIndex));
-  }
-
-  const search = params.toString();
-  return search.length > 0 ? `?${search}` : "";
-}
-
 function getStepIndex(scenario: FlowScenario | null, step: number): number {
   if (!scenario) {
     return 0;
@@ -328,29 +273,17 @@ function getStepIndex(scenario: FlowScenario | null, step: number): number {
   return clamp(step, 0, scenario.steps.length - 1);
 }
 
-function resolveScenario(
-  scenarios: FlowScenario[],
-  scenarioId: string | null,
-): FlowScenario | null {
-  if (!scenarioId) {
-    return null;
-  }
-
-  return scenarios.find((scenario) => scenario.id === scenarioId) ?? scenarios[0] ?? null;
-}
-
-function resolveView(document: FlowDocument, viewId: string | null) {
-  if (!document.views || document.views.length === 0) {
-    return null;
-  }
-
-  if (!viewId) {
-    return document.views[0];
-  }
-
-  return document.views.find((view) => view.id === viewId) ?? document.views[0];
-}
-
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum);
+}
+
+function findScenarioForView(
+  scenarios: FlowScenario[],
+  viewId: string | null,
+): FlowScenario | null {
+  if (!viewId) {
+    return null;
+  }
+
+  return scenarios.find((scenario) => scenario.viewId === viewId) ?? null;
 }
